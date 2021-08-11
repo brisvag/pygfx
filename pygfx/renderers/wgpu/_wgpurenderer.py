@@ -329,6 +329,8 @@ class WgpuRenderer(Renderer):
         # Determine the physical size of the first and last render pass
         framebuffer_size = tuple(max(1, int(pixel_ratio * x)) for x in logical_size)
 
+        force_reset = False
+
         # Resize fragment buffer as needed. This buffer can hold multiple fragments
         # per pixel, so we can achieve order independent transparency.
         force_reset = False
