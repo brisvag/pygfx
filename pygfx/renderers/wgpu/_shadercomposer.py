@@ -291,3 +291,98 @@ class WorldObjectShader(BaseShader):
         """
 
         return clipping_plane_code + world_pos_code
+
+
+# %% Snippets
+
+
+def get_fragment_buffer_snippet(group, binding):
+    return """
+
+        struct Fragment {
+            rgba : vec4<f32>;
+            depth : f32;
+            meh : u32;
+        };  // https://github.com/gfx-rs/naga/blob/9192f7b882ab26b651ec2e010329b81d1d119138/src/valid/type.rs#L165
+
+        struct Pixel {
+            frag : Fragment;
+            lock : atomic<i32>;
+            foo : u32;
+        };
+
+        [[block]]
+        struct FragmentBuffer {
+            lock : atomic<i32>;
+            data: [[stride(48)]] array<Pixel>;
+        };
+
+        [[group(GROUP), binding(BINDING)]]
+        var<storage,read_write> s_fragments: FragmentBuffer;
+
+
+        fn write_fragment_naive(index: i32, frag: Fragment) {
+            // Naive, no locking, so race conflicts occur
+
+            let current_frag = s_fragments.data[index].frag;
+            if (current_frag.depth == 0.0 || frag.depth < current_frag.depth) {
+                s_fragments.data[index].frag = frag;
+            }
+        }
+
+        fn write_fragment_spinlock(index: i32, frag: Fragment) {
+            // Use a spinlock to serialize the writes per-pixel
+
+            let active_lock = &s_fragments.data[index].lock;  // per pixel
+            // let active_lock = &s_fragments.lock;  // global
+
+            // This compiles and runs, but it hangs. And I dont understand why, and this is soo frustrating!
+            loop {
+                let old = atomicExchange(active_lock, 2);
+                if (old != 2) { break; }
+            }
+
+            write_fragment_naive(index, frag);
+
+            atomicStore(active_lock, 1);
+            //s_fragments.data[index].lock = 1;
+        }
+
+        fn write_fragment_retry(index: i32, frag: Fragment) {
+            // Try to do the update, then see if we're the first. If not, try again.
+
+            let active_lock = &s_fragments.data[index].lock;
+            var old_lock_value = atomicLoad(active_lock);
+            var new_lock_value = old_lock_value + 1;
+            //var old_lock_value_ptr : ptr<function,u32> = &old_lock_value;
+
+            loop {
+                write_fragment_naive(index, frag);
+
+                // Cant get this to work. Also the definition has changed, but Naga has not updated to this yet
+                // https://github.com/gfx-rs/naga/issues/1413
+                // https://github.com/gpuweb/gpuweb/issues/2021
+                // https://github.com/gpuweb/gpuweb/pull/2113
+                //let res = atomicCompareExchangeWeak(active_lock, old_lock_value, new_lock_value);
+                //if (exchanged) {
+                //    break;
+                //}
+                break;
+            }
+        }
+
+        fn write_fragment(pos: vec4<f32>, size: vec2<f32>, frag: Fragment) {
+            let x = i32(pos.x);
+            let y = i32(pos.y);
+            let index = y * i32(size.x) + x;
+
+            write_fragment_naive(index, frag);
+            //write_fragment_spinlock(index, frag);
+            //write_fragment_retry(index, frag);
+        }
+
+    """.replace(
+        "GROUP", str(group)
+    ).replace(
+        "BINDING", str(binding)
+    )
