@@ -220,6 +220,7 @@ class MeshShader(WorldObjectShader):
             [[location(4)]] face_idx: vec4<f32>;
             [[location(5)]] face_coords: vec3<f32>;
             [[location(6)]] world_pos: vec3<f32>;
+            [[location(7)]] depth: f32;
             $$ if wireframe
             [[location(7)]] wireframe_coords: vec3<f32>;
             $$ endif
@@ -293,6 +294,7 @@ class MeshShader(WorldObjectShader):
             // Set position
             out.world_pos =world_pos.xyz / world_pos.w;
             out.ndc_pos = vec4<f32>(ndc_pos.xyz, ndc_pos.w);
+            out.depth = ndc_pos.z / ndc_pos.w;
 
             // Set texture coords
             $$ if texture_dim == '1d'
@@ -446,6 +448,7 @@ class MeshShader(WorldObjectShader):
 
             var frag : Fragment;
             frag.rgba = vec4<f32>(lit_color, color_value.a);
+            frag.depth = in.depth;
             write_fragment(in.ndc_pos, u_stdinfo.physical_size, frag);
 
             // Picking

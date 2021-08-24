@@ -101,7 +101,7 @@ class FragmentResolverStep:
 
             let frag = s_fragments.data[index];
             return frag.rgba;
-            //return vec4<f32>(f32(in.pos.x)/size.x, f32(y)/500.0, 0.0, 1.0);
+            //return vec4<f32>(frag.depth/1000.0, 0.0, 0.0, 1.0);
         }
     """
     )
