@@ -297,6 +297,13 @@ class WorldObjectShader(BaseShader):
 
 
 def get_fragment_buffer_snippet(group, binding):
+    """ Get a WGSL snippet to add support for fragment buffering so we
+    can realize OIT. The group and binding must be set to the location
+    of the storage buffer used for this purpose.
+
+    The storage buffer must be large enough, namely .... TODO
+    """
+
     return """
 
         struct Fragment {
