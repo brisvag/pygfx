@@ -331,9 +331,12 @@ class WgpuRenderer(Renderer):
 
         force_reset = False
 
+        # TODO: This needs work, because resizing the fragment buffer means creating
+        # a new storage buffer, which means we need to rebuild all pipelines in which
+        # it is used ...
+
         # Resize fragment buffer as needed. This buffer can hold multiple fragments
         # per pixel, so we can achieve order independent transparency.
-        force_reset = False
         nfragments = 8
         fragment_buffer_size = target_size[0] * target_size[1] * nfragments * 8
         if (
