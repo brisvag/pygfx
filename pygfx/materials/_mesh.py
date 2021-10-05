@@ -1,4 +1,5 @@
 from ._base import Material
+from ..utils.colors import Color
 
 
 class MeshBasicMaterial(Material):
@@ -46,11 +47,11 @@ class MeshBasicMaterial(Material):
         """The uniform color of the mesh, as an rgba tuple.
         This value is ignored if a texture map is used.
         """
-        return self.uniform_buffer.data["color"]
+        return Color(self.uniform_buffer.data["color"])
 
     @color.setter
     def color(self, color):
-        self.uniform_buffer.data["color"] = color
+        self.uniform_buffer.data["color"] = Color(color)
         self.uniform_buffer.update_range(0, 1)
 
     @property
