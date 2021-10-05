@@ -40,6 +40,13 @@ class Color:
     def __iter__(self):
         return self.rgba.__iter__()
 
+    @property
+    def __array_interface__(self):
+        readonly = True
+        ptr = ctypes.addressof(self._val)
+        x = dict(version=3, shape=(4,), typestr="<f4", data=(ptr, readonly))
+        return x
+
     def _save_from_rgba(self, r, g, b, a):
         r = max(0.0, min(1.0, float(r)))
         g = max(0.0, min(1.0, float(g)))
