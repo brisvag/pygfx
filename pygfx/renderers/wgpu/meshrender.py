@@ -157,7 +157,9 @@ def mesh_renderer(wobject, render_info):
         )
         n_instances = wobject.matrices.nitems
 
-    bindings2[1] = Binding("s_fragments", "buffer/storage", render_info.out_buffer, "FRAGMENT")
+    bindings2[1] = Binding(
+        "s_fragments", "buffer/storage", render_info.out_buffer, "FRAGMENT"
+    )
 
     # Determine culling
     if material.side == "FRONT":
